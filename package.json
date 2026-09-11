@@ -1,0 +1,21 @@
+{
+  "name": "a11y-autofix",
+  "version": "0.1.0",
+  "description": "Chromium MV3 extension that auto-repairs WCAG violations in page DOM at parse time. No API key, no network calls.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:all": "node scripts/build.mjs && vitest run && playwright test",
+    "scan:compare": "node src/scripts/compare-scan.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "axe-core": "4.13.0",
+    "esbuild": "^0.25.0",
+    "playwright": "^1.52.0",
+    "vitest": "^3.0.0"
+  }
+}

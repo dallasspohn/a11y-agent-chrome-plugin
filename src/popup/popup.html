@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>a11y-autofix</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>a11y-autofix</h1>
+    <p id="host">Current page</p>
+  </header>
+
+  <main>
+    <section class="summary" aria-label="Summary">
+      <div class="chip chip-found"><span class="num" id="found">–</span><span class="lbl">Found</span></div>
+      <div class="chip chip-fixed"><span class="num" id="fixed">–</span><span class="lbl">Fixed</span></div>
+      <div class="chip chip-unfixed"><span class="num" id="unfixed">–</span><span class="lbl">Unfixed</span></div>
+      <p id="status" role="status">Waiting for scan…</p>
+    </section>
+
+    <section class="fixes" aria-label="Fixed violations">
+      <h2>Fixes</h2>
+      <ol id="fix-list" class="fix-list"></ol>
+      <p id="empty" hidden>No fixes have been applied yet.</p>
+    </section>
+  </main>
+
+  <footer>
+    <button id="revert" type="button">Revert all</button>
+    <button id="rerun" type="button">Re-run</button>
+    <button id="copy" type="button">Copy JSON</button>
+    <button id="disable" type="button">Disable on this site</button>
+    <button id="options" type="button">Options</button>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

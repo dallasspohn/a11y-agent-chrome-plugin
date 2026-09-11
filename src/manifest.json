@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "a11y-autofix",
+  "version": "0.1.0",
+  "description": "Auto-repairs WCAG violations (missing alt text, labels, contrast, headings, tables, keyboard handlers) in the page DOM at parse time. No API keys required, no data leaves your browser.",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "a11y-autofix",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "options_page": "options.html",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["vendor/axe.min.js", "content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["vendor/axe.min.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
