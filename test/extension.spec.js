@@ -34,6 +34,49 @@ function startServer() {
   });
 }
 
+/* Serves one fixture in slow chunks. Localhost delivers a whole document in a
+ * single chunk, so DOMContentLoaded beats the first paint and the suite cannot
+ * tell "repaired at parse time" from "repaired 600ms late" -- which is the only
+ * claim this extension makes. Throttling is what makes that observable. */
+function startChunkedServer({ file = 'bad-page.html', chunks = 12, delayMs = 60 } = {}) {
+  const html = readFileSync(join(FIXTURES, file), 'utf8');
+  return new Promise((resolve) => {
+    const server = createServer(async (req, res) => {
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+      const size = Math.ceil(html.length / chunks);
+      for (let i = 0; i < html.length; i += size) {
+        res.write(html.slice(i, i + size));
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+      res.end();
+    });
+    server.listen(0, '127.0.0.1', () => resolve(server));
+  });
+}
+
+/* Samples the DOM inside every requestAnimationFrame callback -- the last point
+ * a frame can be inspected before it is painted. Any violation recorded here
+ * genuinely reached the screen and the accessibility tree. */
+const PAINT_PROBE = `
+window.__a11yFrames = [];
+(function tick() {
+  requestAnimationFrame(() => {
+    const q = (s) => Array.from(document.querySelectorAll(s));
+    const named = (el) => (el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent || '').trim().length > 0;
+    const bad = [];
+    for (const el of q('img')) if (el.getAttribute('alt') === null) bad.push('img[no-alt] ' + (el.getAttribute('src') || ''));
+    for (const el of q('input:not([type=hidden]), select, textarea'))
+      if (!named(el) && !el.labels?.length && !el.getAttribute('aria-labelledby')) bad.push('field[no-name] ' + el.tagName.toLowerCase());
+    for (const el of q('a[href]')) if (!named(el) && !el.querySelector('img[alt]:not([alt=""])')) bad.push('link[no-name] ' + el.getAttribute('href'));
+    for (const el of q('video')) if (!el.hasAttribute('controls')) bad.push('video[no-controls]');
+    for (const el of q('[onclick]')) if (!el.hasAttribute('role') && !/^(a|button|input)$/i.test(el.tagName)) bad.push('div[onclick,no-role]');
+    if (!document.documentElement.getAttribute('lang')) bad.push('html[no-lang]');
+    window.__a11yFrames.push({ t: +performance.now().toFixed(1), bad });
+    tick();
+  });
+})();
+`;
+
 /* The axe 4.13 rules our nine fixers cover. video-autoplay and
  * click-events-have-key-events were removed from axe-core, so they get
  * plain-DOM assertions instead of axe assertions. select-name is axe's
@@ -145,6 +188,29 @@ test.describe('a11y-autofix extension', () => {
     expect(after).toBe(before);
 
     await context.close();
+  });
+
+  /* The regression guard for the product's actual claim. Before the streaming
+   * self-match fix (fixer-registry query()) this failed with ~37 of 60 frames
+   * dirty: unlabelled images visible for ~470ms and no lang for ~600ms. */
+  test("never paints a frame containing a violation, on a streamed page", async () => {
+    const chunked = await startChunkedServer();
+    const context = await extensionContext();
+    await context.addInitScript(PAINT_PROBE);
+    const page = await context.newPage();
+    await page.goto(`http://127.0.0.1:${chunked.address().port}/bad-page.html`);
+    await waitForDone(page);
+    await page.waitForTimeout(200);
+
+    const frames = await page.evaluate(() => window.__a11yFrames);
+    // Guard the guard: a probe that never sampled the load proves nothing.
+    expect(frames.length).toBeGreaterThan(20);
+
+    const dirty = frames.filter((f) => f.bad.length).map((f) => `${f.t}ms: ${f.bad.join(', ')}`);
+    expect(dirty, `${dirty.length}/${frames.length} painted frames contained a violation`).toEqual([]);
+
+    await context.close();
+    chunked.close();
   });
 
   test("repairs a header-less data table so td-has-header passes", async () => {

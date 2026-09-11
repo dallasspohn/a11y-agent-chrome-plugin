@@ -61,7 +61,13 @@ export function runAll(root, options, { pass = 'full', hooks = {}, log } = {}) {
   const query = (selector) => {
     try {
       if (root && root.nodeType === 9) return Array.from(root.querySelectorAll(selector));
-      return Array.from(root.querySelectorAll(selector));
+      const found = Array.from(root.querySelectorAll(selector));
+      // querySelectorAll only ever returns descendants, but on a streaming pass
+      // the node the parser just added IS the violating element -- an <img> has
+      // no descendant <img> to find. Without this the whole pre-paint repair
+      // path is dead code and every fix slips to DOMContentLoaded.
+      if (root.matches?.(selector)) found.unshift(root);
+      return found;
     } catch (e) {
       warn(`querySelectorAll(${selector}) failed: ${e.message}`);
       return [];
