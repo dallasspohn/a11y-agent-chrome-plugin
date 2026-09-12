@@ -2,11 +2,11 @@
 
 Chromium MV3 extension that auto-repairs WCAG violations in page DOM as early as possible (parse time), with no API key and no network calls. Companion to the CLI scanner at `dallasspohn/a11y-agent`.
 
-**Current state:** Repo is empty — this file is the spec to build from. No code, no `package.json`, no test fixtures yet.
+**Current state:** Fully implemented — 9 core fixers + bonus fixers, streaming MutationObserver, popup/options, unit + e2e tests passing.
 
-## Reference repo (read before writing code)
+## Reference repo
 
-The a11y-agent repo is already cloned at `/home/dspohn/dev/1-workspace/a11y-agent` — use that local path, don't re-clone. It is the ground truth:
+The companion CLI scanner lives at [`dallasspohn/a11y-agent`](https://github.com/dallasspohn/a11y-agent). It is the ground truth:
 
 - `samples/bad-page.html` — fixture with 9+ intentional violations. Primary test page. There is also `good-page.html` and `web-page.html`. Copy the fixture verbatim into `test/fixtures/` when it changes.
 - `src/scan.js` — CLI pipeline (Playwright → axe-core → Claude). Its `--json` output is the interchange format: violations are raw axe-core objects with `id`, `impact` (`critical|serious|moderate|minor`), `help`, and `node.target` (CSS selector array). Impact palette is that same 4-level chalk scheme. JSON goes to stdout, status/debug to stderr.
@@ -27,7 +27,7 @@ The a11y-agent repo is already cloned at `/home/dspohn/dev/1-workspace/a11y-agen
 `manifest.json` perms: `["storage", "activeTab", "scripting"]`, `host_permissions: ["<all_urls>"]`, one content script at `document_start`, `all_frames: true`. Do NOT add `tabs`, `webRequest`, or `history`.
 
 ```
-src/content/early.js         document_start: focus-ring CSS + MutationObserver
+src/content/main.js          document_start: focus-ring CSS + MutationObserver
 src/content/fixers/          one file per rule, export { ruleId, match(node), fix(node) }
 src/content/contrast-math.js WCAG luminance/contrast helpers (pure, unit-testable)
 src/content/fixer-registry.js imports all fixers, exposes runAll(root)
