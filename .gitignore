@@ -1,5 +1,7 @@
 node_modules/
 dist/
+# Packaged dist/ for GitHub Releases — a build artifact, rebuild with npm run build
+*.zip
 test-results/
 playwright-report/
 .env
