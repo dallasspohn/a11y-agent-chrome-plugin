@@ -37,8 +37,11 @@ export function markFixed(el, ruleId) {
  */
 export function stashOriginal(el, attr) {
   const was = el.getAttribute(attr);
-  const key = ORIG_PREFIX + attr
-    .replace(/-(.)/g, (_, c) => c.toUpperCase());
+  // Keep `attr` verbatim, dashes and all. Camel-casing it here was lossy:
+  // setAttribute lowercases attribute names, so `aria-label` stashed as
+  // `data-a11y-orig-ariaLabel` landed as `...-arialabel` and could never be
+  // mapped back. Dashes survive, and dataset re-camel-cases them on read.
+  const key = ORIG_PREFIX + attr;
   if (el.getAttribute(key) === null) {
     el.setAttribute(key, was === null ? '' : was);
   }

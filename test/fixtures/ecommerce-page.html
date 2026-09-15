@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pelago Outfitters &mdash; Men's Footwear</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .nav { display: flex; gap: 12px; margin-bottom: 16px; }
+    .product { border: 1px solid #ddd; padding: 12px; margin: 12px 0; }
+    .price { font-weight: bold; color: #c76; }
+    .sale { color: #b0bec5; }
+    .qty select { margin-top: 4px; }
+    .star { color: #cfd8dc; }
+    .badge-save { background: #2e7d32; color: #fff; padding: 2px 8px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <!-- E-commerce: image gallery, contrast, size picker, hover-only save -->
+
+  <nav class="nav" aria-label="Store">
+    <a href="/">Home</a>
+    <a href="/mens">Men</a>
+    <a href="/cart"><img src="cart-icon.png"></a>
+  </nav>
+
+  <h1>Trail Runner X2</h1>
+  <p class="sale">Save 20% this weekend only</p>
+
+  <img src="trail-runner-main.jpg" width="480" height="320">
+  <p>
+    <img src="trail-runner-1.jpg" class="thumb">
+    <img src="trail-runner-2.jpg" class="thumb">
+    <img src="trail-runner-3.jpg" class="thumb">
+  </p>
+
+  <h3>Product Details</h3>
+  <ul>
+    <li>Breathable mesh upper</li>
+    <li>All-terrain outsole</li>
+    <li>8&nbsp;oz weight per shoe</li>
+  </ul>
+
+  <div class="qty">
+    <form method="post" action="/cart/add">
+      <select name="trail_runner_size">
+        <option value="8">US 8</option>
+        <option value="9">US 9</option>
+        <option value="10">US 10</option>
+      </select>
+      <input type="text" name="trail_runner_promo_code" placeholder="Promo code">
+    </form>
+  </div>
+
+  <table class="compare-table">
+    <tr>
+      <td>Feature</td>
+      <td>Trail Runner</td>
+      <td>Pacer</td>
+    </tr>
+    <tr>
+      <td>Drop (mm)</td>
+      <td>8</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <td>Width</td>
+      <td>D</td>
+      <td>B</td>
+    </tr>
+  </table>
+
+  <p><span class="star">&#9733;&#9733;&#9733;&#9733;&#9734;</span> rated by shoppers</p>
+
+  <div class="badge-save-container" onclick="toggleSave()" style="cursor: pointer;">
+    <span class="badge-save">Save for later</span>
+  </div>
+
+  <audio src="product-film-intro.mp3" autoplay></audio>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trackly &mdash; Project Tracker</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; }
+    #app { max-width: 960px; margin: 0 auto; padding: 16px; }
+    .toolbar { display: flex; gap: 8px; margin: 12px 0; }
+    .panel { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin: 12px 0; }
+    .row { cursor: pointer; padding: 8px; border-bottom: 1px solid #eee; }
+    .muted { color: #aaa; }
+    .btn { background: #4a6fa5; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <!-- SPA shell: client-rendered dashboard, no lang, interactive rows -->
+
+  <div id="app">
+    <nav class="toolbar" aria-label="Workspace">
+      <a href="/boards" role="button">Boards</a>
+      <a href="/reports" role="button">Reports</a>
+      <a href="/settings"><span class="icon-settings"></span></a>
+    </nav>
+
+    <h1>Welcome back, Priya</h1>
+
+    <h3>Your Projects</h3>
+    <div class="panel">
+      <div class="row" onclick="openBoard(1)">
+        <span class="muted">Marketing</span>
+        <span>Q3 Campaign</span>
+      </div>
+      <div class="row" onclick="openBoard(2)">
+        <span class="muted">Engineering</span>
+        <span>API v2 <svg width="14" height="14" viewBox="0 0 16 16"><path d="M8 1l7 14H1z" fill="#666"/></svg></span>
+      </div>
+    </div>
+
+    <img src="team-photo.jpg" width="600" height="300">
+
+    <h3>Billing Summary</h3>
+    <table>
+      <tr>
+        <td>Month</td>
+        <td>Seats</td>
+        <td>Total</td>
+      </tr>
+      <tr>
+        <td>July</td>
+        <td>4</td>
+        <td>$80.00</td>
+      </tr>
+      <tr>
+        <td>August</td>
+        <td>6</td>
+        <td>$120.00</td>
+      </tr>
+    </table>
+
+    <button class="btn" onclick="exportCsv()">
+      <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#fff"/></svg>
+    </button>
+  </div>
+</body>
+</html>

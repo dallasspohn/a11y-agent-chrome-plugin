@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>The Daily Beacon</title>
+  <style>
+    body { font-family: Georgia, serif; margin: 20px; }
+    .masthead { border-bottom: 3px solid #222; padding-bottom: 10px; }
+    .nav { margin: 10px 0; }
+    .byline { color: #bbb; }
+    .lede { color: #888; }
+    .pull-quote { border-left: 4px solid #999; padding-left: 12px; font-size: 1.3em; }
+    .card { border: 1px solid #ddd; padding: 12px; margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <!-- Missing lang attribute, no h1, upgrades straight to h2 -->
+
+  <header class="masthead">
+    <span class="nav">
+      <a href="/"><svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#333"/></svg></a>
+      <a href="/politics">Politics</a>
+      <a href="/sports">Sports</a>
+      <a href="/weather"><img src="weather-icon.png"></a>
+    </span>
+  </header>
+
+  <h2>Markets Rally as Rates Hold Steady</h2>
+  <p class="byline">By Alex Rivera</p>
+
+  <p class="lede">The <strong>Dow Jones</strong> gained 240 points Thursday as the Federal Reserve signaled no change to its benchmark rate.</p>
+
+  <img src="trading-floor.jpg" width="640" height="360">
+
+  <p>Analysts said the rally was broad-based, with industrials and energy leading the advance.</p>
+
+  <p class="pull-quote">"The data suggests the tightening cycle has run its course." — Chief Economist</p>
+
+  <h4>What to Watch Next</h4>
+  <div class="card">
+    <h6>Fed Minutes</h6>
+    <p>Released at 2 p.m. ET on Wednesday.</p>
+  </div>
+  <div class="card">
+    <h6>Earnings Season</h6>
+    <p>Bank earnings kick off next week.</p>
+  </div>
+
+  <video src="markets-highlight.mp4" autoplay width="480" height="270"></video>
+
+  <footer>
+    <p onclick="openNewsletter()" style="color: #1a2f6b; cursor: pointer; text-decoration: underline;">Subscribe to the morning newsletter</p>
+  </footer>
+</body>
+</html>

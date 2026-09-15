@@ -2,6 +2,47 @@ import { normalizeOptions, STORAGE_KEY, hostBlocked, DEFAULT_OPTIONS } from '../
 
 const reports = new Map(); // tabId -> { frames: Map<frameId, report>, combined: report }
 
+/* MV3 evicts this service worker after ~30s idle. `reports` alone therefore
+ * lost every report on eviction, and the popup rendered a false 0/0/0 on a
+ * page that had in fact been repaired. The Map is now a cache in front of
+ * chrome.storage.session, which survives eviction and clears with the browser. */
+const SESSION_KEY = 'a11yReports';
+let hydrating = null;
+
+// storage.session holds JSON, so the per-frame Map serializes as entry pairs.
+function serializeReports() {
+  const out = {};
+  for (const [tabId, entry] of reports) {
+    out[tabId] = { frames: [...entry.frames], combined: entry.combined || null };
+  }
+  return out;
+}
+
+function hydrate() {
+  hydrating ||= (async () => {
+    try {
+      const stored = await chrome.storage.session.get(SESSION_KEY);
+      for (const [tabId, entry] of Object.entries(stored[SESSION_KEY] || {})) {
+        // A report received since wake-up is newer than anything on disk.
+        if (reports.has(Number(tabId))) continue;
+        reports.set(Number(tabId), {
+          frames: new Map(entry.frames || []),
+          combined: entry.combined || null,
+        });
+      }
+    } catch (e) {
+      console.warn('[a11y-autofix] session storage unavailable:', e.message);
+    }
+  })();
+  return hydrating;
+}
+
+async function persistReports() {
+  try {
+    await chrome.storage.session.set({ [SESSION_KEY]: serializeReports() });
+  } catch { /* session storage unavailable; in-memory cache still serves this wake */ }
+}
+
 const BADGE_ORANGE = '#c2410c';
 const BADGE_GREEN = '#16a34a';
 const BADGE_GRAY = '#6b7280';
@@ -60,8 +101,27 @@ async function getOptions() {
   return normalizeOptions(stored[STORAGE_KEY]);
 }
 
+/* Tells the popup why a report is missing. Without this, "the content script
+ * ran and the page is clean" and "the content script never ran" both arrived
+ * as report:null and rendered identically as 0/0/0. */
+async function reportStatus(tab, entry, options, host) {
+  if (!tab) return 'no-tab';
+  if (!options.enabled) return 'disabled';
+  if (hostBlocked(options, host)) return 'disabled-host';
+  if (entry?.combined) return 'ok';
+  try {
+    // The content script only registers its listener once it is enabled and
+    // booted, so a reply means a scan is under way rather than absent.
+    await chrome.tabs.sendMessage(tab.id, { type: 'A11Y_PING' });
+    return 'scanning';
+  } catch {
+    return 'no-content-script';
+  }
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   (async () => {
+    await hydrate();
     const tabId = sender.tab?.id;
     switch (msg.type) {
       case 'A11Y_REPORT': {
@@ -70,6 +130,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         entry.frames.set(sender.frameId ?? 0, msg.report);
         reports.set(tabId, entry);
         setBadge(tabId, combineFrameReports(tabId));
+        await persistReports();
         break;
       }
       case 'A11Y_DISABLED': {
@@ -95,11 +156,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       case 'GET_REPORT': {
         const active = await currentTab();
         const entry = active ? reports.get(active.id) : null;
+        const options = await getOptions();
+        const host = active?.url ? new URL(active.url).hostname : '';
         sendResponse({
           report: entry?.combined || null,
           tabId: active?.id,
-          host: active?.url ? new URL(active.url).hostname : '',
-          options: await getOptions(),
+          host,
+          options,
+          status: await reportStatus(active, entry, options, host),
         });
         break;
       }
@@ -156,13 +220,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   return true; // async sendResponse
 });
 
-chrome.tabs.onActivated.addListener(({ tabId }) => {
+chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+  await hydrate();
   const entry = reports.get(tabId);
   setBadge(tabId, entry?.combined || null);
 });
 
-chrome.tabs.onRemoved.addListener((tabId) => {
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  await hydrate();
   reports.delete(tabId);
+  await persistReports();
 });
 
 chrome.runtime.onInstalled.addListener(async () => {

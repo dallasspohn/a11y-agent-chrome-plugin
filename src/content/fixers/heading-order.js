@@ -1,5 +1,5 @@
 import {
-  skipNode, isFixed, markFixed, htmlSnippet, getSelector,
+  skipNode, isFixed, markFixed, htmlSnippet, getSelector, setAttr,
 } from '../dom-utils.js';
 
 function levelOf(el) {
@@ -33,9 +33,9 @@ export const headingOrder = {
       if (level > expected) {
         const before = htmlSnippet(el);
         markFixed(el, 'heading-order');
-        if (el.getAttribute('role') !== 'heading') el.setAttribute('role', 'heading');
+        if (el.getAttribute('role') !== 'heading') setAttr(el, 'role', 'heading');
         const corrected = prev === 0 ? 1 : expected;
-        el.setAttribute('aria-level', String(corrected));
+        setAttr(el, 'aria-level', String(corrected));
         entries.push({
           selector: getSelector(el),
           before,

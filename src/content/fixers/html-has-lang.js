@@ -1,4 +1,4 @@
-import { isFixed, markFixed, htmlSnippet, getSelector } from '../dom-utils.js';
+import { isFixed, markFixed, htmlSnippet, getSelector, setAttr } from '../dom-utils.js';
 
 /* A screen reader chooses its voice and pronunciation rules from `lang` when it
  * starts reading, so a slightly-wrong value immediately beats a correct one
@@ -59,7 +59,7 @@ export const htmlHasLang = {
     if (!sourceLabel) sourceLabel = navigator.language ? 'navigator.language' : "default 'en'";
 
     const before = htmlSnippet(html);
-    html.setAttribute('lang', source);
+    setAttr(html, 'lang', source);
     // Guessed values stay open to refinement once <head> has parsed.
     if (!meta) html.setAttribute(PROVISIONAL_ATTR, 'true');
     markFixed(html, 'html-has-lang');

@@ -25,6 +25,10 @@ let enabled = true;
 let observer = null;
 let applying = false;
 let done = false;
+// Set by "Revert all", cleared by "Re-run". Without it the observer treats the
+// revert's own attribute changes as page activity and immediately re-fixes
+// everything, so the page never visibly returns to its unrepaired state.
+let suspended = false;
 let state = { fixes: [], unfixedList: [], fixed: 0, unfixed: 0, skipped: 0 };
 let lastRerunAt = 0;
 let rerunTimer = null;
@@ -72,7 +76,7 @@ function runPass(root, pass) {
 }
 
 const observerCallback = (records) => {
-  if (applying || !enabled) return;
+  if (applying || !enabled || suspended) return;
   if (done) {
     scheduleRerun();
     return;
@@ -115,7 +119,7 @@ function scheduleRerun() {
 function handleRerun() {
   rerunTimer = null;
   lastRerunAt = Date.now();
-  if (!enabled || applying) return;
+  if (!enabled || applying || suspended) return;
   const res = runPass(document.documentElement, 'full');
   accumulate(res);
   if (res.fixes.length) sendCurrentReport();
@@ -299,6 +303,11 @@ async function boot() {
 }
 
 function onMessage(msg, sender, sendResponse) {
+  if (msg.type === 'A11Y_PING') {
+    // Lets the popup tell "no scan has landed yet" from "no script here".
+    sendResponse({ status: 'alive', done });
+    return true;
+  }
   if (msg.type === 'A11Y_REVERT') {
     revertAll();
     sendCurrentReport();
@@ -306,12 +315,14 @@ function onMessage(msg, sender, sendResponse) {
     return true;
   }
   if (msg.type === 'A11Y_RERUN') {
+    suspended = false;
     runFullCheck({ silent: true, reset: true }).then(() => sendResponse({ status: 'reran' }));
     return true;
   }
   if (msg.type === 'A11Y_OPTIONS_CHANGED') {
     loadOptionsAndBoot().then(() => {
       if (enabled) {
+        suspended = false;
         runFullCheck({ silent: true, reset: true });
       } else {
         revertAll();
@@ -326,12 +337,31 @@ function onMessage(msg, sender, sendResponse) {
 }
 
 function revertAll() {
+  // Stay suspended after this returns: the page must remain unrepaired until
+  // the user explicitly re-runs. disconnect() also discards the records our
+  // own attribute writes are about to queue.
+  suspended = true;
+  applying = true;
+  observer?.disconnect();
+  try {
+    revertAllInner();
+  } finally {
+    applying = false;
+    if (document.documentElement) observer?.observe(document.documentElement, OBSERVER_OPTS);
+  }
+}
+
+function revertAllInner() {
   const fixed = Array.from(document.querySelectorAll('[data-a11y-fixed]'));
   for (const el of fixed) {
     for (const key of Object.keys(el.dataset)) {
       if (!key.startsWith('a11yOrig')) continue;
       const attr = key
         .replace(/^a11yOrig/, '')
+        // Lowercase the leading capital first: expanding it with the rule
+        // below produced "-style" instead of "style", so no attribute was
+        // ever restored and "Revert all" silently did nothing.
+        .replace(/^[A-Z]/, (c) => c.toLowerCase())
         .replace(/[A-Z]/g, (c) => '-' + c.toLowerCase());
       const orig = el.dataset[key];
       if (orig === '') el.removeAttribute(attr);
@@ -342,6 +372,15 @@ function revertAll() {
     el.removeAttribute('data-a11y-fixed-ai');
   }
   releaseAllKeyHandlers(document);
+  // The focus-visible fixer injects an element rather than an attribute, so
+  // attribute restoration alone left the outline CSS applied — focus rings
+  // survived "Revert all", and the fixer then skipped re-injecting on re-run
+  // because its element was still in the document.
+  document.getElementById('a11y-autofix-css')?.remove();
+  // Same class of leftover: html-has-lang's "provisional" marker is our own
+  // bookkeeping, and leaving it set made the fixer treat the reverted page as
+  // already-owned and skip re-applying lang on re-run.
+  document.documentElement?.removeAttribute('data-a11y-lang-provisional');
   state = { fixes: [], unfixedList: [], fixed: 0, unfixed: 0, skipped: 0 };
   done = false;
   // Re-send the pristine state so badge clears.

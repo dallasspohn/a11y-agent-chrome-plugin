@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+  <meta charset="utf-8">
+  <title>Acme Benefits Enrollment</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    fieldset { border: 1px solid #ccc; border-radius: 6px; margin: 16px 0; padding: 12px; }
+    legend { font-weight: bold; }
+    label { display: block; margin: 8px 0 4px; }
+    input[type="text"], select { width: 240px; padding: 6px; }
+  </style>
+</head>
+<body>
+  <!-- Form-heavy page: unnamed fields, a skipped heading, muted badge text -->
+
+  <div class="nav">
+    <a href="/"><img src="acme-logo.png" width="140" height="40"></a>
+    <a href="/benefits" aria-hidden="true">Benefits</a>
+  </div>
+
+  <h3>Open Enrollment</h3>
+  <p>The plan you choose will apply for the next benefit year.</p>
+
+  <p style="color: #99b4d1;">Submission deadline: November 15</p>
+
+  <form method="post" action="/enroll">
+    <fieldset>
+      <legend>Employee details</legend>
+      <input type="text" name="employee_first_name_with_a_very_long_suffix">
+      <input type="text" placeholder="Surname">
+      <input type="email" title="Work email address">
+      <input type="text">
+    </fieldset>
+
+    <fieldset>
+      <legend>Coverage tier</legend>
+      <select name="plan_year_previous">
+        <option value="2026">2026</option>
+        <option value="2027">2027</option>
+      </select>
+      <input type="text" id="pincode" name="pincode">
+      <input type="text" id="dependents" name="dependents" placeholder="0">
+    </fieldset>
+
+    <button class="cta" onclick="submitForm()">
+      <img src="submit-arrow.png" width="18" height="18">
+    </button>
+  </form>
+
+  <table id="plan-compare">
+    <tr>
+      <td>Plan</td>
+      <td>Monthly</td>
+      <td>Deductible</td>
+    </tr>
+    <tr>
+      <td>Blue</td>
+      <td>$120</td>
+      <td>$500</td>
+    </tr>
+    <tr>
+      <td>Gold</td>
+      <td>$210</td>
+      <td>$250</td>
+    </tr>
+  </table>
+</body>
+</html>
